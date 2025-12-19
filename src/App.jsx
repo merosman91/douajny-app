@@ -4,7 +4,15 @@ import SplashScreen from './components/SplashScreen';
 import Dashboard from './components/Dashboard';
 import CyclesManagement from './components/CyclesManagement';
 import SalesManagement from './components/SalesManagement';
-import { LayoutDashboard, History, ShoppingCart, Users, Settings, Menu, X } from 'lucide-react';
+import DailyRecords from './components/DailyRecords'; // جديد
+import InventoryManagement from './components/InventoryManagement'; // جديد
+import HealthManagement from './components/HealthManagement'; // جديد
+import EmployeesManagement from './components/EmployeesManagement'; // جديد
+import Settings from './components/Settings'; // جديد
+import { 
+  LayoutDashboard, History, ShoppingCart, Users, Settings as SettingsIcon, 
+  Menu, X, ClipboardList, Package, Activity 
+} from 'lucide-react';
 
 const SidebarItem = ({ icon: Icon, text, active, onClick }) => (
   <button 
@@ -27,14 +35,24 @@ function App() {
     switch(currentPage) {
       case 'dashboard': return <Dashboard />;
       case 'cycles': return <CyclesManagement />;
+      case 'daily': return <DailyRecords />;
+      case 'inventory': return <InventoryManagement />;
+      case 'health': return <HealthManagement />;
       case 'sales': return <SalesManagement />;
-      default: return <div className="text-center p-10">قريباً...</div>;
+      case 'employees': return <EmployeesManagement />;
+      case 'settings': return <Settings />;
+      default: return <Dashboard />;
     }
+  };
+
+  const navItemClick = (page) => {
+    setCurrentPage(page);
+    setSidebarOpen(false); // إغلاق القائمة في الموبايل عند الاختيار
   };
 
   return (
     <DataProvider>
-      <div className="flex h-screen bg-gray-100 overflow-hidden">
+      <div className="flex h-screen bg-gray-100 overflow-hidden font-sans">
         
         {/* Mobile Sidebar Overlay */}
         {isSidebarOpen && (
@@ -52,13 +70,16 @@ function App() {
             </button>
           </div>
           
-          <nav className="px-4 py-2">
-            <SidebarItem icon={LayoutDashboard} text="لوحة التحكم" active={currentPage === 'dashboard'} onClick={() => setCurrentPage('dashboard')} />
-            <SidebarItem icon={History} text="إدارة الدورات" active={currentPage === 'cycles'} onClick={() => setCurrentPage('cycles')} />
-            <SidebarItem icon={ShoppingCart} text="المبيعات" active={currentPage === 'sales'} onClick={() => setCurrentPage('sales')} />
-            <SidebarItem icon={Users} text="الموظفين" active={currentPage === 'employees'} onClick={() => setCurrentPage('employees')} />
+          <nav className="px-4 py-2 overflow-y-auto h-[calc(100vh-180px)]">
+            <SidebarItem icon={LayoutDashboard} text="لوحة التحكم" active={currentPage === 'dashboard'} onClick={() => navItemClick('dashboard')} />
+            <SidebarItem icon={History} text="إدارة الدورات" active={currentPage === 'cycles'} onClick={() => navItemClick('cycles')} />
+            <SidebarItem icon={ClipboardList} text="السجلات اليومية" active={currentPage === 'daily'} onClick={() => navItemClick('daily')} />
+            <SidebarItem icon={Package} text="المخزون" active={currentPage === 'inventory'} onClick={() => navItemClick('inventory')} />
+            <SidebarItem icon={Activity} text="الصحة والتحصين" active={currentPage === 'health'} onClick={() => navItemClick('health')} />
+            <SidebarItem icon={ShoppingCart} text="المبيعات" active={currentPage === 'sales'} onClick={() => navItemClick('sales')} />
+            <SidebarItem icon={Users} text="الموظفين" active={currentPage === 'employees'} onClick={() => navItemClick('employees')} />
             <div className="my-4 border-t border-gray-100"></div>
-            <SidebarItem icon={Settings} text="الإعدادات" active={currentPage === 'settings'} onClick={() => setCurrentPage('settings')} />
+            <SidebarItem icon={SettingsIcon} text="الإعدادات" active={currentPage === 'settings'} onClick={() => navItemClick('settings')} />
           </nav>
 
           <div className="absolute bottom-0 w-full p-4 border-t bg-gray-50">
@@ -83,7 +104,7 @@ function App() {
             </header>
 
             {/* Content Body */}
-            <div className="flex-1 overflow-auto p-4 lg:p-8">
+            <div className="flex-1 overflow-auto p-4 lg:p-8 relative">
                 {renderContent()}
             </div>
         </main>
@@ -93,3 +114,4 @@ function App() {
 }
 
 export default App;
+ 
