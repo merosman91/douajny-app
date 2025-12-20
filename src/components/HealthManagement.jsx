@@ -50,10 +50,27 @@ const HealthManagement = () => {
                  <button className="w-full bg-green-500 text-white py-2 rounded-lg">تسجيل</button>
              </form>
              
-             <div className="mt-4 max-h-40 overflow-auto">
-                 {/* هنا يتم عرض السجلات المخزنة في healthLogs إذا قمت بإضافتها للكونتكس */}
-                 <p className="text-sm text-gray-500 text-center">يتم حفظ السجلات هنا...</p>
-             </div>
+                {/* استبدل الـ div الأخير الذي يحتوي على "يتم حفظ السجلات هنا..." بهذا الكود */}
+<div className="mt-4 max-h-60 overflow-auto space-y-2">
+    {data.healthLogs && data.healthLogs
+        .filter(log => log.cycleId === activeCycleId)
+        .slice().reverse()
+        .map((log) => (
+        <div key={log.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg border-r-4 border-green-500">
+            <div>
+                <p className="font-bold text-gray-800">{log.name}</p>
+                <p className="text-xs text-gray-500">{log.date}</p>
+            </div>
+            <span className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full">
+                {log.status || 'تم'}
+            </span>
+        </div>
+    ))}
+    {(!data.healthLogs || data.healthLogs.filter(l => l.cycleId === activeCycleId).length === 0) && 
+        <p className="text-center text-gray-400 py-4">لا توجد سجلات صحية لهذه الدورة</p>
+    }
+</div>
+
         </div>
       </div>
     </div>
