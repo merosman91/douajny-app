@@ -2,19 +2,22 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 
 const DataContext = createContext();
 
+// 👇 هنا كان الخطأ، أضفنا healthLogs
 const initialData = {
-  cycles: [], // الدورات
-  inventory: [], // المخزون
-  sales: [], // المبيعات
-  employees: [], // الموظفين
-  expenses: [], // المصروفات
-  dailyRecords: [] // السجلات اليومية
+  cycles: [],
+  inventory: [],
+  sales: [],
+  employees: [],
+  expenses: [],
+  dailyRecords: [],
+  healthLogs: [] // ✅ تمت الإضافة لمنع الانهيار
 };
 
 export const DataProvider = ({ children }) => {
   const [data, setData] = useState(() => {
     const saved = localStorage.getItem('douajny_db');
-    return saved ? JSON.parse(saved) : initialData;
+    // دمج البيانات المحفوظة مع البيانات الأولية لضمان وجود الحقول الجديدة
+    return saved ? { ...initialData, ...JSON.parse(saved) } : initialData;
   });
 
   const [activeCycleId, setActiveCycleId] = useState(() => {
@@ -29,11 +32,12 @@ export const DataProvider = ({ children }) => {
     if (activeCycleId) localStorage.setItem('douajny_active_cycle', activeCycleId);
   }, [activeCycleId]);
 
-  // دوال مساعدة للإضافة والحذف
   const addItem = (collection, item) => {
+    // حماية إضافية: التأكد أن المصفوفة موجودة قبل الإضافة
+    const targetCollection = data[collection] || []; 
     setData(prev => ({
       ...prev,
-      [collection]: [...prev[collection], { ...item, id: Date.now(), createdAt: new Date() }]
+      [collection]: [...targetCollection, { ...item, id: Date.now(), createdAt: new Date() }]
     }));
   };
 
@@ -51,13 +55,12 @@ export const DataProvider = ({ children }) => {
     }));
   };
 
-  // إحصائيات سريعة للدورة النشطة
   const getCycleStats = (cycleId) => {
-    if (!cycleId) return null;
-    const cycleSales = data.sales.filter(s => s.cycleId === cycleId);
+    if (!cycleId) return { totalSales: 0, totalExpenses: 0, profit: 0 };
+    const cycleSales = data.sales?.filter(s => s.cycleId === cycleId) || [];
     const totalSales = cycleSales.reduce((sum, item) => sum + Number(item.total), 0);
-    const cycleExpenses = data.expenses.filter(e => e.cycleId === cycleId);
-    const totalExpenses = cycleExpenses.reduce((sum, item) => sum + Number(item.amount), 0);
+    const cycleExpenses = data.expenses?.filter(e => e.cycleId === cycleId) || [];
+    const totalExpenses = cycleExpenses.reduce((sum, item) => sum + Number(item.amount || 0), 0);
     
     return { totalSales, totalExpenses, profit: totalSales - totalExpenses };
   };
