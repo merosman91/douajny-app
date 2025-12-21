@@ -1,117 +1,68 @@
 import React, { useState } from 'react';
-import { DataProvider } from './context/DataContext';
-import SplashScreen from './components/SplashScreen';
+import { DataProvider, useData } from './context/DataContext';
 import Dashboard from './components/Dashboard';
-import CyclesManagement from './components/CyclesManagement';
-import SalesManagement from './components/SalesManagement';
-import DailyRecords from './components/DailyRecords'; // جديد
-import InventoryManagement from './components/InventoryManagement'; // جديد
-import HealthManagement from './components/HealthManagement'; // جديد
-import EmployeesManagement from './components/EmployeesManagement'; // جديد
-import Settings from './components/Settings'; // جديد
-import { 
-  LayoutDashboard, History, ShoppingCart, Users, Settings as SettingsIcon, 
-  Menu, X, ClipboardList, Package, Activity 
-} from 'lucide-react';
+import Cycles from './components/Cycles';
+import Daily from './components/Daily';
+import Financials from './components/Financials';
+import Settings from './components/Settings';
+import Toast from './components/Toast';
+import { LayoutDashboard, Calendar, ClipboardList, Wallet, Settings as SettingsIcon, Menu, X, Egg } from 'lucide-react';
 
 const SidebarItem = ({ icon: Icon, text, active, onClick }) => (
-  <button 
-    onClick={onClick}
-    className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors mb-1 ${active ? 'bg-primary text-white shadow-md' : 'text-gray-600 hover:bg-blue-50'}`}
-  >
-    <Icon size={20} />
-    <span className="font-medium">{text}</span>
+  <button onClick={onClick} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all mb-1 ${active ? 'bg-primary text-white shadow-lg shadow-blue-200' : 'text-slate-600 hover:bg-slate-50'}`}>
+    <Icon size={20} strokeWidth={active ? 2.5 : 2} /> <span className={`font-medium ${active ? 'font-bold' : ''}`}>{text}</span>
   </button>
 );
 
-function App() {
-  const [loading, setLoading] = useState(true);
-  const [currentPage, setCurrentPage] = useState('dashboard');
-  const [isSidebarOpen, setSidebarOpen] = useState(false);
+const AppContent = () => {
+  const [page, setPage] = useState('dashboard');
+  const [menuOpen, setMenuOpen] = useState(false);
+  const { toast } = useData();
 
-  if (loading) return <SplashScreen onFinish={() => setLoading(false)} />;
-
-  const renderContent = () => {
-    switch(currentPage) {
-      case 'dashboard': return <Dashboard />;
-      case 'cycles': return <CyclesManagement />;
-      case 'daily': return <DailyRecords />;
-      case 'inventory': return <InventoryManagement />;
-      case 'health': return <HealthManagement />;
-      case 'sales': return <SalesManagement />;
-      case 'employees': return <EmployeesManagement />;
-      case 'settings': return <Settings />;
-      default: return <Dashboard />;
-    }
-  };
-
-  const navItemClick = (page) => {
-    setCurrentPage(page);
-    setSidebarOpen(false); // إغلاق القائمة في الموبايل عند الاختيار
-  };
+  const nav = (p) => { setPage(p); setMenuOpen(false); };
 
   return (
-    <DataProvider>
-      <div className="flex h-screen bg-gray-100 overflow-hidden font-sans">
-        
-        {/* Mobile Sidebar Overlay */}
-        {isSidebarOpen && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 z-20 lg:hidden" onClick={() => setSidebarOpen(false)}></div>
-        )}
+    <div className="flex h-screen bg-slate-50 overflow-hidden">
+      {toast && <Toast message={toast.message} type={toast.type} />}
+      
+      {/* Sidebar */}
+      <aside className={`fixed lg:relative z-40 w-72 h-full bg-white border-l border-slate-100 transform transition-transform duration-300 ${menuOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'}`}>
+        <div className="p-6 flex items-center justify-between">
+            <h1 className="text-2xl font-black text-primary flex items-center gap-2"><Egg className="fill-current"/> دواجنــي</h1>
+            <button onClick={()=>setMenuOpen(false)} className="lg:hidden text-slate-400"><X/></button>
+        </div>
+        <nav className="px-4 space-y-1">
+            <SidebarItem icon={LayoutDashboard} text="لوحة التحكم" active={page==='dashboard'} onClick={()=>nav('dashboard')} />
+            <SidebarItem icon={Calendar} text="إدارة الدورات" active={page==='cycles'} onClick={()=>nav('cycles')} />
+            <SidebarItem icon={ClipboardList} text="السجلات اليومية" active={page==='daily'} onClick={()=>nav('daily')} />
+            <SidebarItem icon={Wallet} text="المالية والمبيعات" active={page==='finance'} onClick={()=>nav('finance')} />
+            <div className="py-4"><hr className="border-slate-100"/></div>
+            <SidebarItem icon={SettingsIcon} text="الإعدادات" active={page==='settings'} onClick={()=>nav('settings')} />
+        </nav>
+      </aside>
 
-        {/* Sidebar */}
-        <aside className={`fixed lg:relative z-30 w-64 h-full bg-white border-l border-gray-200 transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'}`}>
-          <div className="p-6 flex justify-between items-center">
-            <h1 className="text-2xl font-bold text-primary flex items-center gap-2">
-              <span className="text-3xl">🐔</span> دواجنــي
-            </h1>
-            <button onClick={() => setSidebarOpen(false)} className="lg:hidden text-gray-500">
-                <X size={24} />
-            </button>
-          </div>
-          
-          <nav className="px-4 py-2 overflow-y-auto h-[calc(100vh-180px)]">
-            <SidebarItem icon={LayoutDashboard} text="لوحة التحكم" active={currentPage === 'dashboard'} onClick={() => navItemClick('dashboard')} />
-            <SidebarItem icon={History} text="إدارة الدورات" active={currentPage === 'cycles'} onClick={() => navItemClick('cycles')} />
-            <SidebarItem icon={ClipboardList} text="السجلات اليومية" active={currentPage === 'daily'} onClick={() => navItemClick('daily')} />
-            <SidebarItem icon={Package} text="المخزون" active={currentPage === 'inventory'} onClick={() => navItemClick('inventory')} />
-            <SidebarItem icon={Activity} text="الصحة والتحصين" active={currentPage === 'health'} onClick={() => navItemClick('health')} />
-            <SidebarItem icon={ShoppingCart} text="المبيعات" active={currentPage === 'sales'} onClick={() => navItemClick('sales')} />
-            <SidebarItem icon={Users} text="الموظفين" active={currentPage === 'employees'} onClick={() => navItemClick('employees')} />
-            <div className="my-4 border-t border-gray-100"></div>
-            <SidebarItem icon={SettingsIcon} text="الإعدادات" active={currentPage === 'settings'} onClick={() => navItemClick('settings')} />
-          </nav>
-
-          <div className="absolute bottom-0 w-full p-4 border-t bg-gray-50">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-blue-200 flex items-center justify-center text-blue-700 font-bold">A</div>
-              <div>
-                <p className="text-sm font-bold">المدير العام</p>
-                <p className="text-xs text-gray-500">admin@douajny.com</p>
-              </div>
+      {/* Main Content */}
+      <main className="flex-1 flex flex-col h-full overflow-hidden">
+        <header className="lg:hidden bg-white p-4 flex justify-between items-center shadow-sm z-30">
+             <h1 className="font-bold text-lg text-primary">دواجنــي ERP</h1>
+             <button onClick={()=>setMenuOpen(true)}><Menu/></button>
+        </header>
+        <div className="flex-1 overflow-auto p-4 lg:p-8">
+            <div className="max-w-6xl mx-auto animate-fade-in">
+                {page === 'dashboard' && <Dashboard />}
+                {page === 'cycles' && <Cycles />}
+                {page === 'daily' && <Daily />}
+                {page === 'finance' && <Financials />}
+                {page === 'settings' && <Settings />}
             </div>
-          </div>
-        </aside>
-
-        {/* Main Content */}
-        <main className="flex-1 flex flex-col h-full overflow-hidden">
-            {/* Mobile Header */}
-            <header className="lg:hidden bg-white p-4 shadow-sm flex justify-between items-center">
-                <h1 className="text-xl font-bold text-gray-800">دواجنــي</h1>
-                <button onClick={() => setSidebarOpen(true)} className="text-gray-600">
-                    <Menu size={24} />
-                </button>
-            </header>
-
-            {/* Content Body */}
-            <div className="flex-1 overflow-auto p-4 lg:p-8 relative">
-                {renderContent()}
-            </div>
-        </main>
-      </div>
-    </DataProvider>
+        </div>
+      </main>
+      
+      {menuOpen && <div className="fixed inset-0 bg-black/20 z-30 lg:hidden" onClick={()=>setMenuOpen(false)}></div>}
+    </div>
   );
-}
+};
 
-export default App;
- 
+export default function App() {
+  return <DataProvider><AppContent /></DataProvider>;
+}
