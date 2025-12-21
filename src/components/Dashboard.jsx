@@ -1,85 +1,83 @@
 import React from 'react';
 import { useData } from '../context/DataContext';
-import { DollarSign, Activity, Package, AlertCircle } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
+import { DollarSign, Activity, AlertTriangle, TrendingUp, Package } from 'lucide-react';
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 
-const StatCard = ({ title, value, icon: Icon, color }) => (
-  <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
+const StatCard = ({ title, value, sub, icon: Icon, color }) => (
+  <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between">
     <div>
       <p className="text-gray-500 text-sm mb-1">{title}</p>
       <h3 className="text-2xl font-bold text-gray-800">{value}</h3>
+      {sub && <p className="text-xs mt-1 text-gray-400">{sub}</p>}
     </div>
-    <div className={`p-3 rounded-full ${color}`}>
-      <Icon className="text-white" size={24} />
-    </div>
+    <div className={`p-3 rounded-xl ${color} text-white shadow-md`}><Icon size={24} /></div>
   </div>
 );
 
 const Dashboard = () => {
   const { data, activeCycleId, getCycleStats } = useData();
   
-  if (!activeCycleId) return <div className="p-10 text-center text-gray-500">الرجاء اختيار أو إنشاء دورة إنتاجية من القائمة الجانبية للبدء.</div>;
+  if (!activeCycleId) return <div className="flex h-full items-center justify-center text-gray-400">يرجى اختيار دورة من القائمة الجانبية</div>;
 
   const stats = getCycleStats(activeCycleId);
-  const currentCycle = data.cycles.find(c => c.id === activeCycleId);
-
-  // تجهيز بيانات الرسم البياني (مثال: المبيعات حسب النوع)
-  const chartData = [
-    { name: 'دواجن حية', value: 4000 },
-    { name: 'بيض', value: 3000 },
-    { name: 'مخلفات', value: 2000 },
-  ];
+  const chartData = data.dailyRecords
+    .filter(r => r.cycleId === activeCycleId)
+    .slice(-7)
+    .map(r => ({ date: r.date.slice(5), weight: r.weight }));
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-gray-800">لوحة التحكم - {currentCycle?.name}</h2>
-        <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">متصل الآن</span>
-      </div>
-
-      {/* Stats Grid */}
+    <div className="space-y-6 pb-20">
+      <h2 className="text-2xl font-bold text-gray-800">نظرة عامة على الأداء</h2>
+      
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard title="إجمالي المبيعات" value={`${stats.totalSales.toLocaleString()} ج.م`} icon={DollarSign} color="bg-blue-500" />
-        <StatCard title="المصروفات" value={`${stats.totalExpenses.toLocaleString()} ج.م`} icon={Activity} color="bg-red-500" />
-        <StatCard title="صافي الربح" value={`${stats.profit.toLocaleString()} ج.م`} icon={Package} color="bg-green-500" />
-        <StatCard title="عدد الطيور الحالي" value={currentCycle?.birdCount || 0} icon={AlertCircle} color="bg-orange-500" />
+        <StatCard title="العدد الحالي" value={stats.currentCount} sub={`النافق: ${stats.mortalityRate}%`} icon={Package} color="bg-blue-500" />
+        <StatCard title="صافي الربح" value={`${stats.profit.toLocaleString()}`} sub="عملة محلية" icon={DollarSign} color={stats.profit >= 0 ? "bg-green-500" : "bg-red-500"} />
+        <StatCard title="معامل التحويل" value={stats.fcr} sub="FCR القياسي: 1.5" icon={Activity} color="bg-purple-500" />
+        <StatCard title="استهلاك العلف" value={`${stats.totalFeed}`} sub="كيلوجرام" icon={TrendingUp} color="bg-orange-500" />
       </div>
 
-      {/* Charts Area */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-          <h3 className="text-lg font-bold mb-4 text-gray-700">تحليل المبيعات</h3>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+          <h3 className="font-bold text-gray-700 mb-4">منحنى نمو الوزن (آخر 7 أيام)</h3>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
+              <AreaChart data={chartData}>
+                <defs>
+                  <linearGradient id="colorWeight" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#0ea5e9" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#0ea5e9" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                <XAxis dataKey="date" />
                 <YAxis />
                 <Tooltip />
-                <Bar dataKey="value" fill="#0ea5e9" radius={[4, 4, 0, 0]} />
-              </BarChart>
+                <Area type="monotone" dataKey="weight" stroke="#0ea5e9" fillOpacity={1} fill="url(#colorWeight)" />
+              </AreaChart>
             </ResponsiveContainer>
           </div>
         </div>
-        
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-            <h3 className="text-lg font-bold mb-4 text-gray-700">آخر العمليات</h3>
-            <div className="space-y-4">
-                {data.sales.slice(-5).reverse().map((sale) => (
-                    <div key={sale.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                        <div>
-                            <p className="font-bold text-gray-800">فاتورة #{sale.id.toString().slice(-4)}</p>
-                            <p className="text-xs text-gray-500">{new Date(sale.createdAt).toLocaleDateString('ar-EG')}</p>
-                        </div>
-                        <span className="font-bold text-green-600">+{sale.total} ج.م</span>
-                    </div>
-                ))}
-                 {data.sales.length === 0 && <p className="text-center text-gray-400 py-4">لا توجد عمليات حديثة</p>}
-            </div>
+
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+          <h3 className="font-bold text-gray-700 mb-4">تنبيهات النظام</h3>
+          <div className="space-y-4">
+             {Number(stats.mortalityRate) > 5 && (
+                <div className="p-3 bg-red-50 text-red-700 rounded-lg text-sm flex gap-2 items-center">
+                    <AlertTriangle size={16} /> تحذير: نسبة النافق مرتفعة ({stats.mortalityRate}%)
+                </div>
+             )}
+             <div className="p-3 bg-blue-50 text-blue-700 rounded-lg text-sm flex gap-2 items-center">
+                 <Activity size={16} /> متوسط الوزن: {stats.avgWeight} جم
+             </div>
+             {data.inventory.filter(i => i.quantity < 5).map(i => (
+                 <div key={i.id} className="p-3 bg-orange-50 text-orange-700 rounded-lg text-sm flex gap-2 items-center">
+                    <Package size={16} /> مخزون منخفض: {i.name}
+                 </div>
+             ))}
+          </div>
         </div>
       </div>
     </div>
   );
 };
-
 export default Dashboard;
